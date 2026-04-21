@@ -1,0 +1,292 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users/{userId}/invoices
+    // Document ID: invoiceId
+    // Fields:
+    //   - id: string (required)
+    //   - accountNumber: string (required)
+    //   - customer: map (required)
+    //   - items: list (required)
+    //   - subtotal: number
+    //   - totalAmount: number (required)
+    //   - amountPaid: number
+    //   - balance: number
+    //   - status: string (required)
+    //   - createdAt: string (required)
+    //   - installments: list
+    //   - payments: list
+    //
+    // Collection: users/{userId}/products
+    // Document ID: productId
+    // Fields:
+    //   - id: number (required)
+    //   - name: string (required)
+    //   - price: number (required)
+    //   - stock: number (required)
+    //   - imei: string
+    //
+    // Collection: users/{userId}/tasks
+    // Document ID: taskId
+    // Fields:
+    //   - id: string (required)
+    //   - description: string (required)
+    //   - dueDate: string (required)
+    //   - completed: bool (required)
+    //
+    // Collection: users/{userId}/blacklist
+    // Document ID: blacklistId
+    // Fields:
+    //   - id: string (required)
+    //   - name: string (required)
+    //   - phone: string (required)
+    //   - reason: string (required)
+    //   - createdAt: string (required)
+    //
+    // Collection: users/{userId}/shopDetails
+    // Document ID: main
+    // Fields:
+    //   - name: string
+    //   - address: string
+    //   - phone1: string
+    //   - phone2: string
+    //   - paymentMethod: string
+    //
+    // Collection: users/{userId}/settings
+    // Document ID: main
+    // Fields:
+    //   - reminderLeadTime: number
+    //   - autoBackupFrequency: number
+    //   - invoicePaperSize: string
+    //   - viewMode: string
+    //   - isAutoSyncEnabled: bool
+    //
+    // Collection: users/{userId}/recurringInvoices
+    // Document ID: recurringInvoiceId
+    // Fields:
+    //   - id: string (required)
+    //   - customer: map (required)
+    //   - items: list (required)
+    //   - frequency: string (required)
+    //   - amount: number (required)
+    //   - startDate: string (required)
+    //   - nextGenerationDate: string (required)
+    //   - lastGeneratedDate: string
+    //   - status: string (required)
+    //   - totalCycles: number
+    //   - completedCycles: number (required)
+    //   - notes: string
+    //
+    // Collection: users/{userId}/blankBillLog
+    // Document ID: logId
+    // Fields:
+    //   - invoiceNumber: string
+    //   - date: string
+    //   - total: string
+    //
+    // Collection: users/{userId}/blankBillTemplates
+    // Document ID: templateId
+    // Fields:
+    //   - id: string
+    //   - name: string
+    //
+    // Collection: users/{userId}/blankBillSettings
+    // Document ID: main
+    // Fields:
+    //   - templateStyle: string
+    //   - paperSize: string
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "sachithamadushan554@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string &&
+        (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidInvoice(data) {
+      return data.id is string &&
+             data.accountNumber is string &&
+             data.customer is map &&
+             data.items is list &&
+             data.totalAmount is number &&
+             data.status is string &&
+             data.createdAt is string;
+    }
+
+    function isValidProduct(data) {
+      return data.id is number &&
+             data.name is string &&
+             data.price is number &&
+             data.stock is number;
+    }
+
+    function isValidTask(data) {
+      return data.id is string &&
+             data.description is string &&
+             data.dueDate is string &&
+             data.completed is bool;
+    }
+
+    function isValidBlacklist(data) {
+      return data.id is string &&
+             data.name is string &&
+             data.phone is string &&
+             data.reason is string &&
+             data.createdAt is string;
+    }
+
+    function isValidRecurringInvoice(data) {
+      return data.id is string &&
+             data.customer is map &&
+             data.items is list &&
+             data.frequency is string &&
+             data.amount is number &&
+             data.startDate is string &&
+             data.nextGenerationDate is string &&
+             data.status is string &&
+             data.completedCycles is number;
+    }
+
+    function isValidSettings(data) {
+      return data.reminderLeadTime is number &&
+             data.autoBackupFrequency is number &&
+             data.invoicePaperSize is string &&
+             data.viewMode is string &&
+             data.isAutoSyncEnabled is bool;
+    }
+
+    function isValidBlankBillLog(data) {
+      return data.invoiceNumber is string &&
+             data.date is string &&
+             data.total is string;
+    }
+
+    function isValidBlankBillTemplate(data) {
+      return data.id is string &&
+             data.name is string;
+    }
+
+    function isValidBlankBillSettings(data) {
+      return data.templateStyle is string &&
+             data.paperSize is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+
+      match /invoices/{invoiceId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidInvoice(request.resource.data);
+        allow update: if isOwner(userId) && isValidInvoice(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /products/{productId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidProduct(request.resource.data);
+        allow update: if isOwner(userId) && isValidProduct(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /tasks/{taskId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidTask(request.resource.data);
+        allow update: if isOwner(userId) && isValidTask(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /blacklist/{blacklistId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidBlacklist(request.resource.data);
+        allow update: if isOwner(userId) && isValidBlacklist(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /shopDetails/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
+      }
+
+      match /recurringInvoices/{recurringInvoiceId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidRecurringInvoice(request.resource.data);
+        allow update: if isOwner(userId) && isValidRecurringInvoice(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /settings/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) && isValidSettings(request.resource.data);
+      }
+
+      match /blankBillLog/{logId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidBlankBillLog(request.resource.data);
+        allow update: if isOwner(userId) && isValidBlankBillLog(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /blankBillTemplates/{templateId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidBlankBillTemplate(request.resource.data);
+        allow update: if isOwner(userId) && isValidBlankBillTemplate(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /blankBillSettings/{docId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) && isValidBlankBillSettings(request.resource.data);
+      }
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

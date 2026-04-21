@@ -1,0 +1,176 @@
+{
+  "entities": {
+    "Invoice": {
+      "title": "Invoice",
+      "description": "A billing record for a customer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "customer": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "balance": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "installments": { "type": "array" },
+        "payments": { "type": "array" }
+      },
+      "required": ["id", "customer", "items", "totalAmount", "status", "createdAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "An item in the inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "stock": { "type": "number" },
+        "imei": { "type": "string" }
+      },
+      "required": ["id", "name", "price", "stock"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A to-do item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "completed": { "type": "boolean" }
+      },
+      "required": ["id", "description", "dueDate", "completed"]
+    },
+    "BlacklistedCustomer": {
+      "title": "BlacklistedCustomer",
+      "description": "A customer who is blacklisted",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "reason": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "phone", "reason", "createdAt"]
+    },
+    "ShopDetails": {
+      "title": "ShopDetails",
+      "description": "Details of the shop",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "phone1": { "type": "string" },
+        "phone2": { "type": "string" },
+        "paymentMethod": { "type": "string" }
+      }
+    },
+    "RecurringInvoice": {
+      "title": "RecurringInvoice",
+      "description": "A recurring billing cycle for a customer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customer": { "type": "object" },
+        "items": { "type": "array" },
+        "frequency": { "type": "string" },
+        "amount": { "type": "number" },
+        "startDate": { "type": "string" },
+        "nextGenerationDate": { "type": "string" },
+        "lastGeneratedDate": { "type": "string" },
+        "status": { "type": "string" },
+        "totalCycles": { "type": "number" },
+        "completedCycles": { "type": "number" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "customer", "items", "frequency", "amount", "startDate", "nextGenerationDate", "status", "completedCycles"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Application settings",
+      "type": "object",
+      "properties": {
+        "reminderLeadTime": { "type": "number" },
+        "autoBackupFrequency": { "type": "number" },
+        "invoicePaperSize": { "type": "string" },
+        "viewMode": { "type": "string" },
+        "isAutoSyncEnabled": { "type": "boolean" }
+      }
+    },
+    "BlankBillRecord": {
+      "title": "BlankBillRecord",
+      "description": "A record of a blank bill generated",
+      "type": "object",
+      "properties": {
+        "invoiceNumber": { "type": "string" },
+        "date": { "type": "string" },
+        "total": { "type": "string" }
+      }
+    },
+    "BlankBillTemplate": {
+      "title": "BlankBillTemplate",
+      "description": "A template for blank bills",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+    "BlankBillSettings": {
+      "title": "BlankBillSettings",
+      "description": "Settings for blank bills",
+      "type": "object",
+      "properties": {
+        "templateStyle": { "type": "string" },
+        "paperSize": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "User's invoices"
+    },
+    "/users/{userId}/products/{productId}": {
+      "schema": "Product",
+      "description": "User's products"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "User's tasks"
+    },
+    "/users/{userId}/blacklist/{blacklistId}": {
+      "schema": "BlacklistedCustomer",
+      "description": "User's blacklist"
+    },
+    "/users/{userId}/shopDetails/main": {
+      "schema": "ShopDetails",
+      "description": "User's shop details"
+    },
+    "/users/{userId}/settings/main": {
+      "schema": "AppSettings",
+      "description": "User's app settings"
+    },
+    "/users/{userId}/recurringInvoices/{recurringInvoiceId}": {
+      "schema": "RecurringInvoice",
+      "description": "User's recurring invoices"
+    },
+    "/users/{userId}/blankBillLog/{logId}": {
+      "schema": "BlankBillRecord",
+      "description": "User's blank bill logs"
+    },
+    "/users/{userId}/blankBillTemplates/{templateId}": {
+      "schema": "BlankBillTemplate",
+      "description": "User's blank bill templates"
+    },
+    "/users/{userId}/blankBillSettings/main": {
+      "schema": "BlankBillSettings",
+      "description": "User's blank bill settings"
+    }
+  }
+}

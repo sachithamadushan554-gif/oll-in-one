@@ -1,0 +1,7 @@
+{
+  "name": "MW all in one billing system",
+  "description": "A comprehensive billing system for your mobile shop. Features AI Intelligence Hub for ledger analysis, automated payments, create invoices, tracking payments, and setting up installment plans with payment reminders.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

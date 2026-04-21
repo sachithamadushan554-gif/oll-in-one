@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
+    <title>MW Retail Billing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Sinhala:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://apis.google.com/js/api.js" onload="window.gapiLoaded = true"></script>
+    <script src="https://accounts.google.com/gsi/client" onload="window.gisLoaded = true"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('theme');
+          if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) { console.error('FOUC script failed', e); }
+      })();
+    </script>
+    <style>
+      :root {
+        --app-height: 100vh;
+        --spring-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        --smooth-easing: cubic-bezier(0.4, 0, 0.2, 1);
+        --bio-pulse: cubic-bezier(0.4, 0, 0.6, 1);
+      }
+      @supports (height: 100dvh) {
+        :root { --app-height: 100dvh; }
+      }
+      html, body {
+        height: var(--app-height);
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+      }
+      body.lang-si {
+        font-family: 'Noto Sans Sinhala', 'Plus Jakarta Sans', sans-serif;
+      }
+      
+      .subtle-bg {
+        background-color: #f8fafc;
+        background-image: radial-gradient(#6366f108 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      .dark .subtle-bg {
+        background-color: #020617;
+        background-image: radial-gradient(#ffffff05 1px, transparent 1px);
+      }
+      
+      .custom-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scroll::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+        transition: background 0.3s ease;
+      }
+      .dark .custom-scroll::-webkit-scrollbar-thumb {
+        background: #1e293b;
+      }
+
+      @media print {
+        @page { margin: 0; }
+        
+        /* Reset containers for print */
+        body { background: white !important; -webkit-print-color-adjust: exact !important; overflow: visible !important; }
+        #root { display: none !important; }
+        
+        #print-preview-root, #print-preview-root * { visibility: visible !important; }
+        
+        /* Ensure the root container is not absolute/fixed during print to allow natural page flow */
+        #print-preview-root { 
+          position: static !important; 
+          display: block !important;
+          width: 100% !important; 
+          height: auto !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        /* Reset the wrapper in PrintPreview.tsx */
+        .fixed.inset-0.bg-slate-900\/95 {
+          position: static !important;
+          display: block !important;
+          background: white !important;
+          padding: 0 !important;
+          overflow: visible !important;
+        }
+
+        .print-page {
+          display: block !important;
+          position: relative !important;
+          margin: 0 auto !important;
+          box-sizing: border-box !important;
+          overflow: visible !important;
+        }
+        .print-page:not(:last-child) {
+          page-break-after: always !important;
+          break-after: page !important;
+        }
+
+        .print-page.a4 { width: 210mm; min-height: 297mm; }
+        .print-page.a5 { width: 148mm; min-height: 210mm; }
+        .print-page.a6 { width: 105mm; min-height: 148mm; }
+        
+        .no-print { display: none !important; }
+        .print-content-wrapper { 
+          opacity: 1 !important; 
+          transform: none !important; 
+          display: block !important;
+          overflow: visible !important;
+        }
+
+        #print-preview-content {
+          display: block !important;
+          position: static !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+        }
+        
+        .page-break { 
+          display: block !important; 
+          page-break-before: always !important; 
+          break-before: page !important; 
+          clear: both !important; 
+          height: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+      }
+
+      /* Biological Motion System */
+      @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(12px) scale(0.99); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.6s var(--spring-easing) forwards;
+      }
+
+      @keyframes slide-in-right {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      .animate-slide-in-right {
+        animation: slide-in-right 0.4s var(--smooth-easing) forwards;
+      }
+
+      @keyframes bio-breathe {
+        0%, 100% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.02); opacity: 1; }
+      }
+      .animate-bio-breathe {
+        animation: bio-breathe 2s var(--bio-pulse) infinite;
+      }
+
+      @keyframes checkmark-pop {
+        0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+        70% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      }
+      .animate-checkmark-pop {
+        animation: checkmark-pop 0.4s var(--spring-easing) forwards;
+      }
+
+      /* Spatial UI Interactions */
+      .hover-lift {
+        transition: transform 0.3s var(--spring-easing), box-shadow 0.3s ease, border-color 0.3s ease;
+      }
+      .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.15);
+      }
+      .dark .hover-lift:hover {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      .stagger-child > * {
+        opacity: 0;
+        animation: fade-in-up 0.5s var(--spring-easing) forwards;
+      }
+      .stagger-child > *:nth-child(1) { animation-delay: 40ms; }
+      .stagger-child > *:nth-child(2) { animation-delay: 80ms; }
+      .stagger-child > *:nth-child(3) { animation-delay: 120ms; }
+      .stagger-child > *:nth-child(4) { animation-delay: 160ms; }
+      .stagger-child > *:nth-child(5) { animation-delay: 200ms; }
+
+      .animate-height {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.4s var(--smooth-easing);
+      }
+      .animate-height.open {
+        grid-template-rows: 1fr;
+      }
+      .animate-height > div {
+        overflow: hidden;
+      }
+
+      .tap-squish:active {
+        transform: scale(0.96);
+        transition: transform 0.1s ease;
+      }
+
+      @keyframes shimmer {
+        100% { transform: translateX(100%); }
+      }
+      .animate-shimmer {
+        animation: shimmer 2s infinite;
+      }
+
+      @keyframes pulse-subtle {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.85; }
+      }
+      .animate-pulse-subtle {
+        animation: pulse-subtle 3s ease-in-out infinite;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-slate-50 text-slate-900 dark:bg-[#020617] dark:text-slate-200 subtle-bg">
+    <div id="root"></div>
+    <div id="print-preview-root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
